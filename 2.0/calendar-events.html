@@ -1,7 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
-<link rel="import" href="./my-icons.html">
 <link rel="import" href="./date-mixin.html">
 <link rel="import" href="./calendar-widget.html">
 
@@ -230,7 +229,6 @@
               <div class="more">
                 <a href="[[item.locationLink]]" target="_blank" class="calendar__link" hidden$="[[_computeHidden(item.location)]]">
                   [[item.location]]
-                  <iron-icon icon="my-icons:place" class="icon--place"></iron-icon>
                 </a>
                 <p class="desc" hidden$="[[_computeHidden(item.desc)]]">[[item.desc]]</span>
               </div>
