@@ -1,0 +1,247 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/google-apis/google-client-loader.html">
+<link rel="import" href="./date-mixin.html">
+
+<dom-module id="calendar-data">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <!-- client loader -->
+    <google-client-loader id="calendar" name="calendar" version="v3"
+     on-google-api-load="_onLoad" on-google-api-load-error="_onError"></google-client-loader>
+
+  </template>
+
+  <script>
+    /**
+     * `calendar-data`
+     * This element is a wrapper for the google client loader to organize data.
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class CalendarData extends DateMixin(Polymer.Element) {
+      static get is() { return 'calendar-data'; }
+
+      static get properties() {
+        return {
+          /**
+           * API key
+           */
+          apiKey: {
+            type: String,
+            notify: true,
+            reflectToAttribute: true
+          },
+          /**
+           * Calendar ID
+           */
+          calendarId: {
+            type: String,
+            notify: true,
+            reflectToAttribute: true
+          },
+          /**
+           * Date
+           */
+          dateMin: {
+            type: Date
+          },
+          /**
+           * Array that holds all of the events.
+           */
+          events: {
+            type: Array,
+            notify: true,
+            value: function() {
+              return [];
+            }
+          },
+          /**
+           * Loaded boolean
+           */
+          loaded: {
+            type: Boolean,
+            notify: true,
+            value: false
+          }
+        };
+      }
+
+      static get observers() {
+        return [
+            '_eventsChanged(events.*)'
+        ]
+      }
+
+      /**
+       * On load callback
+       * @private
+       */
+      _onLoad: function() { this.request(); }
+
+      /**
+       * On error callback
+       * @private
+       */
+      _onError: function(err) {}
+
+      /**
+       * Verify request and call processRequest.
+       * @public
+       */
+      request() {
+
+        if (this.$.calendar.api) {
+
+          if (this.apiKey) {
+            gapi.client.setApiKey(this.apiKey);
+          }
+
+          var params = {
+            calendarId: this.calendarId,
+            timeMin: (new Date()).toISOString()
+          };
+
+          var request = this.$.calendar.api.events.list(params);
+
+          request.execute((response) => {
+            this.cancelDebouncer('calendarRequest');
+            this.set('loaded', true);
+            this._processResponse(response.items);
+          }, (err) => {
+            this.set('loaded', true);
+            this.events = [];
+          });
+
+          this.debounce('calendarRequest', this._requestTimeout.bind(this), 5000);
+
+        }
+
+      }
+
+      /**
+       * Timeout callback
+       * @private
+       */
+      _requestTimeout() {
+
+        this.set('loaded', true);
+        this.events = [];
+
+      }
+
+      /**
+       * Set up events array and push items into array.
+       * @private
+       */
+      _processResponse(items) {
+
+        var processedEvents = items.map( (item) => {
+          return this._processResponseItem(item);
+        }, this);
+
+        var events = this.events;
+
+        this.set('events', events.concat(processedEvents));
+
+      }
+
+      /**
+       * Create event object from response data.
+       * @private
+       */
+      _processResponseItem(item) {
+
+        if (!item.start.dateTime || !item.end.dateTime) {
+          return;
+        }
+
+        var event = {};
+        event.__event = item;
+        event.title = item.summary ? item.summary : 'No summary available.';
+        event.desc = item.description ? item.description : 'hide';
+        event.location = item.location ? item.location : 'hide';
+        event.locationLink = item.location ? 'http://maps.google.com/?q=' + item.location : 'hide';
+
+        var ifPractice = new RegExp('Practice').test(event.title);
+        var ifGame = new RegExp('Game').test(event.title);
+
+        event.practice = ifPractice;
+        event.game = ifGame;
+
+        var startDate = new Date(item.start.dateTime);
+        var endDate = new Date(item.end.dateTime);
+
+        event.start = {
+          date: startDate,
+          dateText: this._getDateDayString(startDate),
+          monthText: this._getDateMonthString(startDate),
+          time: this._getDisplayTimeString(startDate)
+        };
+
+        event.end = {
+          date: endDate,
+          dateText: this._getDateDayString(endDate),
+          monthText: this._getDateMonthString(endDate),
+          time: this._getDisplayTimeString(endDate)
+        };
+
+        return event;
+
+      }
+
+      /**
+       * If an event was selected, deselect the others.
+       * @param {event} cr current event.
+       * @private
+       */
+      _eventsChanged(cr) {
+
+        var events = cr.base;
+        var path = cr.path;
+        var value = cr.value;
+
+        this._onlyOneTrueValue(events, path, value, 'selected');
+
+        var visibleIndex = path.indexOf('.visible');
+
+        if (visibleIndex > -1 && value === false) {
+          events.map(function(event, index) {
+            this.set('events.' + index + '.selected', false);
+          }, this);
+        }
+
+      }
+
+      /**
+       * Only allow one event with a true value for the property.
+       * @private
+       */
+      _onlyOneTrueValue(events, path, value, keyname) {
+
+        var index = path.indexOf('.' + keyname);
+
+        if (index > -1 && value === true) {
+          var itempath = path.substring(0, index);
+          var item = this.get(itempath);
+          var index = events.indexOf(item);
+
+          events.map((event, index) => {
+            if (event !== item) {
+              this.set('events.' + index + '.' + keyname, false);
+            }
+          }, this);
+        }
+
+      }
+
+    }
+    window.customElements.define(CalendarData.is, CalendarData);
+  </script>
+</dom-module>

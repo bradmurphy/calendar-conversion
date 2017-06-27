@@ -1,0 +1,162 @@
+DateMixin = function(superClass) {
+  return class extends superClass {
+    constructor() {
+      super();
+    }
+
+    /**
+     * @private
+     */
+    _getDateDayString(date) {
+      var localDate = date.toLocaleDateString();
+      localDate = new Date(localDate).toISOString().slice(0, 10);
+      return date ? localDate : '';
+    }
+
+    /**
+     * @private
+     */
+    _getDateMonthString(date) {
+      return date ? date.toISOString().slice(0, 7) : '';
+    }
+
+    /**
+     * @private
+     */
+    _getDateYearString(date) {
+      return date ? date.getFullYear() : '';
+    }
+
+    /**
+     * @private
+     */
+    _getDisplayDateString(startDate, endDate, lang, dir) {
+      var startDayString = this._getDateDayString(startDate);
+      var startMonthString = this._getDateMonthString(startDate);
+      var startYearString = this._getDateYearString(startDate);
+      var endDayString = this._getDateDayString(endDate);
+      var endMonthString = this._getDateMonthString(endDate);
+      var endYearString = this._getDateYearString(endDate);
+      var result;
+      if (startDayString === endDayString) {
+        result = this._getSingleDateString(startDate, lang, dir);
+      } else if (startYearString !== endYearString) {
+        result = this._getMultipleYearDateString(startDate, endDate, lang, dir);
+      } else if (startMonthString !== endMonthString) {
+        result = this._getMultipleMonthDateString(startDate, endDate, lang, dir);
+      } else {
+        result = this._getMultipleDateString(startDate, endDate, lang, dir);
+      }
+      return result;
+    }
+
+    /**
+     * September 19, 2016
+     * @private
+     */
+    _getSingleDateString(startDate, lang, dir) {
+      var startFormatter = new Intl.DateTimeFormat(lang, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      var startText = startFormatter.format(startDate);
+      var result = [
+        this._wrapDirString(startText, dir)
+      ];
+      return result.join('');
+    }
+
+    /**
+     * September 19-24, 2016
+     * @private
+     */
+    _getMultipleDateString(startDate, endDate, lang, dir) {
+      var startFormatter = new Intl.DateTimeFormat(lang, {
+        month: 'long',
+        day: 'numeric'
+      });
+      var endFormatter = new Intl.DateTimeFormat(lang, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      var startText = startFormatter.format(startDate);
+      var endText = endFormatter.format(endDate);
+      var result = [
+        this._wrapDirString(startText, dir),
+        ' \u2013 ',
+        this._wrapDirString(endText, dir)
+      ];
+      return result.join('');
+    }
+
+    /**
+     * September 19-October 24, 2016
+     * @private
+     */
+    _getMultipleMonthDateString(startDate, endDate, lang, dir) {
+      var startFormatter = new Intl.DateTimeFormat(lang, {
+        month: 'long',
+        day: 'numeric'
+      });
+      var endFormatter = new Intl.DateTimeFormat(lang, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      var startText = startFormatter.format(startDate);
+      var endText = endFormatter.format(endDate);
+      var result = [
+        this._wrapDirString(startText, dir),
+        ' \u2013 ',
+        this._wrapDirString(endText, dir)
+      ];
+      return result.join('');
+    }
+
+    /**
+     * December 19,2016-January 24, 2017
+     * @private
+     */
+    _getMultipleYearDateString(startDate, endDate, lang, dir) {
+      var startFormatter = new Intl.DateTimeFormat(lang, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      var endFormatter = new Intl.DateTimeFormat(lang, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      var startText = startFormatter.format(startDate);
+      var endText = endFormatter.format(endDate);
+      var result = [
+        this._wrapDirString(startText, dir),
+        ' \u2013 ',
+        this._wrapDirString(endText, dir)
+      ];
+      return result.join('');
+    }
+
+    /**
+     * Calculate time of event.
+     */
+    _getDisplayTimeString(date) {
+      if(date) {
+        var time = date.toLocaleTimeString('en-US');
+        time = time.replace(/:+[0]+\s/g, ' ');
+
+        return time;
+      }
+    }
+
+    /**
+     * Wrap strings with unicode format control codepoints based on language direction
+     */
+    wrapDirString(str, dir) {
+      return dir === 'rtl' ? '\u202B' + str + '\u202C' : '\u202A' + str + '\u202C';
+    }
+  }
+}
