@@ -328,7 +328,7 @@
           return propOne === 'hide' && propTwo === 'hide' ?
           true : false;
         }
-      },
+      }
 
       /**
        * Return selected class for selected items.
@@ -338,7 +338,7 @@
 
         return selected ? 'selected' : '';
 
-      },
+      }
 
       /**
        * Toggle the current selected event.
@@ -350,7 +350,7 @@
         var index = this.events.indexOf(event);
         this.set('events.' + index + '.selected', !event.selected);
 
-      },
+      }
 
       /**
        * Sort events by date.
@@ -362,7 +362,7 @@
         var dateB = b.start.date;
         return dateA === dateB ? 0 : dateA > dateB ? 1 : -1;
 
-      },
+      }
 
       /**
        * Filter events visible by month.
@@ -370,7 +370,7 @@
        */
       _computeEventsFilter(month) {
 
-        return function(event, index) {
+        return (event, index) => {
 
           var index = this.events.indexOf(event);
           var isMonth = month === event.start.monthText;
@@ -380,9 +380,9 @@
 
           return isVisible;
 
-        }.bind(this);
+        };
 
-      },
+      }
 
       /**
        * Check if events loaded and if there are events.
@@ -392,7 +392,7 @@
 
         return eventsLoaded && events.length > 0 && events.filter(eventsFilter).length === 0;
 
-      },
+      }
 
       /**
        * Format date from event data.
