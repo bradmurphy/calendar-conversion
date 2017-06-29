@@ -1,117 +1,106 @@
-<!--
-@license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
-
-<link rel="import" href="../bower_components-1.x/polymer/polymer.html">
-<link rel="import" href="../bower_components-1.x/google-apis/google-client-loader.html">
-<link rel="import" href="./date-behavior.html">
-
-<!--
-`<calendar-data>` is an element for pulling google calendar data.
-
-### Example:
-
-    <calendar-data api-key="apiKey" calendar-id="calendarId"></calendar-data>
-
-@element calendar-data
--->
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../google-apis/google-client-loader.html">
+<link rel="import" href="./date-mixin.html">
 
 <dom-module id="calendar-data">
-
-  <template strip-whitespace>
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
 
     <!-- client loader -->
-
-    <google-client-loader id="calendar" name="calendar" version="v3"
-     on-google-api-load="_onLoad" on-google-api-load-error="_onError"></google-client-loader>
+    <google-client-loader id="calendar" name="calendar" version="v3"></google-client-loader>
 
   </template>
 
   <script>
-    Polymer({
+    /**
+     * `calendar-data`
+     * This element is a wrapper for the google client loader to organize data.
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class CalendarData extends DateMixin(Polymer.Element) {
+      static get is() { return 'calendar-data'; }
 
-      is: 'calendar-data',
-
-      behaviors: [DateBehaviors.EventsBehavior],
-
-      properties: {
-        /**
-         * API key
-         */
-        apiKey: {
-          type: String,
-          notify: true,
-          reflectToAttribute: true
-        },
-        /**
-         * Calendar ID
-         */
-        calendarId: {
-          type: String,
-          notify: true,
-          reflectToAttribute: true
-        },
-        /**
-         * Date
-         */
-        dateMin: {
-          type: Date
-        },
-        /**
-         * Array that holds all of the events.
-         */
-        events: {
-          type: Array,
-          notify: true,
-          value: function() {
-            return [];
+      static get properties() {
+        return {
+          /**
+           * API key
+           */
+          apiKey: {
+            type: String,
+            notify: true,
+            reflectToAttribute: true
+          },
+          /**
+           * Calendar ID
+           */
+          calendarId: {
+            type: String,
+            notify: true,
+            reflectToAttribute: true
+          },
+          /**
+           * Date
+           */
+          dateMin: {
+            type: Date
+          },
+          /**
+           * Array that holds all of the events.
+           */
+          events: {
+            type: Array,
+            notify: true,
+            value: () => {
+              return [];
+            }
+          },
+          /**
+           * Loaded boolean
+           */
+          loaded: {
+            type: Boolean,
+            notify: true,
+            value: false
           }
-        },
-        /**
-         * Loaded boolean
-         */
-        loaded: {
-          type: Boolean,
-          notify: true,
-          value: false
-        }
-      },
+        };
+      }
+
+      static get observers() {
+        return [
+            '_eventsChanged(events.*)'
+        ]
+      }
 
       /**
-       * Observer for when events array changes.
+       * Add event listeners.
+       * @public
        */
-      observers: [
-        '_eventsChanged(events.*)'
-      ],
+      ready() {
+        super.ready();
 
-      /**
-       * On load callback
-       * @private
-       */
-      _onLoad: function() {
+        console.log(this.apiKey, this.calendarID, this.$.calendar);
+        
+        this.$.calendar.addEventListener('google-api-load', (e) => {
+          this.request();
+        });
 
-
-        this.request();
-
-      },
-
-      /**
-       * On error callback
-       * @private
-       */
-      _onError: function(err) {},
+        this.$.calendar.addEventListener('google-api-load-error', (e) => {
+          console.log('Error ': e);
+        });
+      }
 
       /**
        * Verify request and call processRequest.
-       * @private
+       * @public
        */
-      request: function() {
+      request() {
 
         if (this.$.calendar.api) {
 
@@ -126,39 +115,39 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           var request = this.$.calendar.api.events.list(params);
 
-          request.execute(function(response) {
+          request.execute((response) => {
             this.cancelDebouncer('calendarRequest');
             this.set('loaded', true);
             this._processResponse(response.items);
-          }.bind(this), function(err){
+          }, (err) => {
             this.set('loaded', true);
             this.events = [];
-          }.bind(this));
+          });
 
           this.debounce('calendarRequest', this._requestTimeout.bind(this), 5000);
 
         }
 
-      },
+      }
 
       /**
        * Timeout callback
        * @private
        */
-      _requestTimeout: function() {
+      _requestTimeout() {
 
         this.set('loaded', true);
         this.events = [];
 
-      },
+      }
 
       /**
        * Set up events array and push items into array.
        * @private
        */
-      _processResponse: function(items) {
+      _processResponse(items) {
 
-        var processedEvents = items.map(function(item) {
+        var processedEvents = items.map( (item) => {
           return this._processResponseItem(item);
         }, this);
 
@@ -166,13 +155,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         this.set('events', events.concat(processedEvents));
 
-      },
+      }
 
       /**
        * Create event object from response data.
        * @private
        */
-      _processResponseItem: function(item) {
+      _processResponseItem(item) {
 
         if (!item.start.dateTime || !item.end.dateTime) {
           return;
@@ -210,13 +199,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         return event;
 
-      },
+      }
 
       /**
        * If an event was selected, deselect the others.
+       * @param {event} cr current event.
        * @private
        */
-      _eventsChanged: function(cr) {
+      _eventsChanged(cr) {
 
         var events = cr.base;
         var path = cr.path;
@@ -232,13 +222,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }, this);
         }
 
-      },
+      }
 
       /**
        * Only allow one event with a true value for the property.
        * @private
        */
-      _onlyOneTrueValue: function(events, path, value, keyname) {
+      _onlyOneTrueValue(events, path, value, keyname) {
 
         var index = path.indexOf('.' + keyname);
 
@@ -247,7 +237,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var item = this.get(itempath);
           var index = events.indexOf(item);
 
-          events.map(function(event, index) {
+          events.map((event, index) => {
             if (event !== item) {
               this.set('events.' + index + '.' + keyname, false);
             }
@@ -256,7 +246,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       }
 
-    });
+    }
+    window.customElements.define(CalendarData.is, CalendarData);
   </script>
-
 </dom-module>
