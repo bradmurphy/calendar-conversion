@@ -1,0 +1,48 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="calendar-events.html">
+<link rel="import" href="calendar-data.html">
+
+<dom-module id="calendar-wrapper">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <!-- <calendar-events></calendar-events> -->
+
+    <calendar-data
+     api-key="AIzaSyABqAomiqQpSkpghtfc2L2yOKQswvmT31w"
+     calendar-id="iigg14160n41pt6m6gn8her7oc@group.calendar.google.com"
+     date-min="[[dateMin]]"
+     events="{{events}}"
+     loaded="{{eventsLoaded}}">
+    </calendar-data>
+
+  </template>
+
+  <script>
+    /**
+     * `calendar-wrapper`
+     * A wrapper element for the calendar components.
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class CalendarWrapper extends Polymer.Element {
+      static get is() { return 'calendar-wrapper'; }
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'calendar-wrapper'
+          }
+        };
+      }
+    }
+
+    window.customElements.define(CalendarWrapper.is, CalendarWrapper);
+  </script>
+</dom-module>

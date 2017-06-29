@@ -1,0 +1,423 @@
+<link rel="import" href="../polymer/polymer.html">
+<!-- <link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../paper-spinner/paper-spinner-lite.html"> -->
+<link rel="import" href="./date-mixin.html">
+<link rel="import" href="./calendar-widget.html">
+<link rel="import" href="./calendar-data.html">
+
+<dom-module id="calendar-events">
+  <template>
+    <style>
+      /* Base styles */
+      :host {
+        display: block;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 14px;
+        line-height: 29px;
+        color: var(--cardinal-navy);
+      }
+
+      #wrapper {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        margin: 0 auto;
+      }
+
+      #calendar {
+        /*border-right: 1px solid var(--cardinal-navy);*/
+        padding: 0x 60px 24px 0;
+        width: 370px;
+      }
+
+      #events {
+        min-height: 200px;
+        padding: 0 0 24px 24px;
+        position: relative;
+        -webkit-box-flex: 1;
+        -webkit-flex: 1;
+        -ms-flex: 1;
+         flex: 1;
+      }
+
+      /* Event styles */
+      .event h1 {
+        font-size: 18px;
+        line-height: 24px;
+        font-weight: 300;
+      }
+
+      .date {
+        text-align: right;
+        font-size: 14px;
+        line-height: 29px;
+        font-weight: 400;
+      }
+
+      .desc {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 16px;
+        line-height: 22px;
+        color: #757575;
+      }
+
+      .event {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        -webkit-transition: all 0.3s ease-out;
+           -moz-transition: all 0.3s ease-out;
+            -ms-transition: all 0.3s ease-out;
+             -o-transition: all 0.3s ease-out;
+                transition: all 0.3s ease-out;
+      }
+
+      .event .more {
+        max-height: 0;
+        overflow: hidden;
+      }
+
+      .event.selected {
+        box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+      }
+
+      .event.selected .more {
+        max-height: 1000px;
+        -webkit-transition: max-height 0.2s;
+        transition: max-height 0.2s;
+      }
+
+      .event.selected .expand {
+        display: none;
+      }
+
+      .event .collapse {
+        display: none;
+      }
+
+      .event.selected .collapse {
+        display: block;
+      }
+
+      .event {
+        position: relative;
+        padding: 20px;
+        background: #fff;
+        margin-bottom: 30px;
+        cursor: pointer;
+      }
+
+      .event:last-of-type {
+        margin-bottom: 0;
+      }
+
+      .more {
+        border-top: 1px solid #757575;
+        box-sizing: border-box;
+      }
+
+      .calendar__link {
+        display: block;
+        margin-top: 14px;
+        text-decoration: none;
+        color: var(--cardinal-red);
+        font-size: 14px;
+        line-height: 22px;
+      }
+
+      .icon--place {
+        position: relative;
+        top: -2px;
+        width: 18px;
+        height: 18px;
+      }
+
+      /* Extra UI styles */
+      .icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        --iron-icon-width: 30px;
+        --iron-icon-height: 30px;
+        --iron-icon-fill-color: var(--cardinal-red);
+      }
+
+      #spinner {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        --paper-spinner-color: var(--cardinal-red);
+      }
+
+      .message {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        -webkit-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        font-size: 18px;
+        line-height: 32px;
+        text-transform: uppercase;
+        font-weight: 500;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      /* Mobile styles */
+      @media screen and (max-width: 1250px) {
+
+        #wrapper {
+          margin: 0 auto;
+          max-width: 370px;
+          -webkit-flex-direction: column;
+              -ms-flex-direction: column;
+                  flex-direction: column;
+          -webkit-flex-wrap: wrap;
+              -ms-flex-wrap: wrap;
+                  flex-wrap: wrap;
+        }
+
+        #calendar {
+          width: 100%;
+          padding: 24px 0;
+        }
+
+        #events {
+         padding: 24px 0;
+         width: 100%;
+        }
+
+      }
+
+      @media screen and (max-width: 370px) {
+
+        #wrapper {
+          margin: 0 14px;
+        }
+
+      }
+    </style>
+
+    <!-- calendar data -->
+
+    <calendar-data
+     api-key="AIzaSyABqAomiqQpSkpghtfc2L2yOKQswvmT31w"
+     calendar-id="iigg14160n41pt6m6gn8her7oc@group.calendar.google.com"
+     date-min="[[dateMin]]"
+     events="{{events}}"
+     loaded="{{eventsLoaded}}">
+    </calendar-data>
+
+    <div id="wrapper">
+
+      <!-- calendar element -->
+
+      <div id="calendar">
+        <calendar-widget class="calendar"
+          current-date="[[dateMin]]"
+          events="{{events}}"
+          current-month="{{selectedMonth}}">
+        </calendar-widget>
+      </div>
+
+      <!-- events container -->
+
+      <div id="events">
+
+        <!-- events template -->
+
+        <template is="dom-if" if="[[!zeroEvents]]">
+          <template is="dom-repeat" items="{{events}}" filter="[[eventsFilter]]" sort="_sortByStartDate">
+
+            <article class$="event [[_getSelectedClass(item.selected)]]" on-tap="_toggleEvent">
+              <header>
+                <h1 class="title">[[item.title]] | [[_formatDate(item)]]</h1>
+                <iron-icon icon="icons:expand-more" class="icon expand" hidden$="[[_computeHidden(item.location, item.desc)]]"></iron-icon>
+                <iron-icon icon="icons:expand-less" class="icon collapse" hidden$="[[_computeHidden(item.location, item.desc)]]"></iron-icon>
+              </header>
+              <div class="more">
+                <a href="[[item.locationLink]]" target="_blank" class="calendar__link" hidden$="[[_computeHidden(item.location)]]">
+                  [[item.location]]
+                </a>
+                <p class="desc" hidden$="[[_computeHidden(item.desc)]]">[[item.desc]]</span>
+              </div>
+            </article>
+
+          </template>
+        </template>
+
+        <!-- zero events template -->
+
+        <template is="dom-if" if="[[zeroEvents]]">
+          <div class="message">
+            No events
+          </div>
+        </template>
+
+        <!-- loading icon -->
+
+        <paper-spinner-lite id="spinner" active="[[!eventsLoaded]]"></paper-spinner-lite>
+
+      </div>
+
+    </div>
+
+  </template>
+
+  <script>
+    /**
+     * `calendar-events`
+     * This element is for displaying the calendar widget, data and events.
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class CalendarEvents extends DateMixin(Polymer.Element) {
+      static get is() { return 'calendar-events'; }
+
+      static get properties() {
+        return {
+          /**
+           * Current date
+           */
+          dateMin: {
+           type: Date,
+           value: function() {
+             return new Date();
+           }
+          },
+          /**
+           * Array that holds all of the events.
+           */
+          events: {
+            type: Array,
+            notify: true
+          },
+          /**
+           * Boolean to check the loaded status.
+           */
+          eventsLoaded: Boolean,
+          /**
+           * Filter events by month.
+           */
+          eventsFilter: {
+            type: Function,
+            computed: '_computeEventsFilter(selectedMonth)'
+          },
+          /**
+           * Selected month
+           */
+          selectedMonth: {
+            type: String,
+            value: ''
+          },
+          /**
+           * Check if there are zero events.
+           */
+          zeroEvents: {
+            type: Boolean,
+            computed: '_computeZeroEvents(events, eventsLoaded, eventsFilter)'
+          }
+        };
+      }
+
+      /**
+       * Compute hidden function for location and description
+       * @param  {string} propOne property one
+       * @param  {string} propTwo property two
+       * @return {boolean} boolean returned based off property
+       */
+      _computeHidden(propOne, propTwo) {
+        if(propOne) {
+          return propOne === 'hide' ? true : false;
+        } else if(propOne && propTwo) {
+          return propOne === 'hide' && propTwo === 'hide' ?
+          true : false;
+        }
+      }
+
+      /**
+       * Return selected class for selected items.
+       * @private
+       */
+      _getSelectedClass(selected) {
+
+        return selected ? 'selected' : '';
+
+      }
+
+      /**
+       * Toggle the current selected event.
+       * @private
+       */
+      _toggleEvent(e) {
+
+        var event = e.model.item;
+        var index = this.events.indexOf(event);
+        this.set('events.' + index + '.selected', !event.selected);
+
+      }
+
+      /**
+       * Sort events by date.
+       * @private
+       */
+      _sortByStartDate(a, b) {
+
+        var dateA = a.start.date;
+        var dateB = b.start.date;
+        return dateA === dateB ? 0 : dateA > dateB ? 1 : -1;
+
+      }
+
+      /**
+       * Filter events visible by month.
+       * @private
+       */
+      _computeEventsFilter(month) {
+
+        return (event, index) => {
+
+          var index = this.events.indexOf(event);
+          var isMonth = month === event.start.monthText;
+          var isVisible = isMonth;
+
+          this.set('events.' + index + '.visible', isVisible);
+
+          return isVisible;
+
+        };
+
+      }
+
+      /**
+       * Check if events loaded and if there are events.
+       * @private
+       */
+      _computeZeroEvents(events, eventsLoaded, eventsFilter) {
+
+        return eventsLoaded && events.length > 0 && events.filter(eventsFilter).length === 0;
+
+      }
+
+      /**
+       * Format date from event data.
+       * @private
+       */
+      _formatDate(item) {
+
+        var times = ' | ' + item.start.time + ' - ' + item.end.time;
+
+        return item.start.dateText === item.end.dateText ?
+        this._getSingleDateString(item.start.date, 'en', 'ltr') + times :
+        this._getMultipleMonthDateString(item.start.date, item.end.date, 'en', 'ltr') + times;
+
+      }
+
+    }
+    window.customElements.define(CalendarEvents.is, CalendarEvents);
+  </script>
+</dom-module>
