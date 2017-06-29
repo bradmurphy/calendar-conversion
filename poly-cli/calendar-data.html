@@ -85,14 +85,16 @@
       ready() {
         super.ready();
 
-        console.log(this.apiKey, this.calendarID, this.$.calendar);
-        
+        console.info(this.apiKey);
+        console.info(this.calendarId);
+        console.info(this.$.calendar);
+
         this.$.calendar.addEventListener('google-api-load', (e) => {
           this.request();
         });
 
         this.$.calendar.addEventListener('google-api-load-error', (e) => {
-          console.log('Error ': e);
+          console.log('Error :' + e);
         });
       }
 
