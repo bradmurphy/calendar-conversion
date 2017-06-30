@@ -74,12 +74,13 @@
 
       static get observers() {
         return [
-            '_eventsChanged(events.*)'
+          '_eventsChanged(events.*)'
         ]
       }
 
       /**
        * Add event listeners.
+       * TODO: Get event listeners working? :P
        * @public
        */
       ready() {
@@ -205,7 +206,7 @@
 
       /**
        * If an event was selected, deselect the others.
-       * @param {event} cr current event.
+       * @param {event} cr selected event.
        * @private
        */
       _eventsChanged(cr) {
